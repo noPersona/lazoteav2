@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendario — La Azotea</title>
+  <meta name="description" content="Carteles por mes del ciclo de La Azotea Cineclub" />
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <!-- Fondo -->
+  <div class="bg-wrap" aria-hidden="true">
+    <div class="bg-fallback" aria-hidden="true"></div>
+    <video class="bg-video" autoplay muted loop playsinline preload="metadata" poster="../assets/static-poster.jpg">
+      <source src="../assets/staticShort.webm" type="video/webm">
+      <source src="../assets/staticShort.mp4" type="video/mp4">
+      Tu navegador no soporta video HTML5.
+    </video>
+  </div>
+  <div class="bg-overlay" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <!-- Menú global -->
+  <header id="siteHeader" role="banner">
+    <nav class="nav">
+      <a href="../index.html">Inicio</a>
+      <a href="calendario.html">Calendario</a>
+      <a href="ciclos.html">Ciclos</a>
+      <a href="archivo.html">Archivo</a>
+      <a href="us.html">Nosotros</a>
+      <a href="secretotunel.html">Contacto</a>
+    </nav>
+  </header>
+
+  <main class="main centered">
+    <h1>Calendario</h1>
+    <p>Carteles por mes y notas del ciclo. Haz clic en un mes para ver su galería.</p>
+
+    <div class="months-layout">
+      <aside class="months-nav">
+        <nav class="month-list" id="monthList">
+          <!-- Mantén tus enlaces; el JSON se usa solo para título/texto -->
+          <a href="#2025-11" data-folder="../assets/posters/noviembre/">Nov 2025</a>
+          <a href="#2025-12" data-folder="../assets/posters/diciembre/">Dic 2025</a>
+          <a href="#2026-01" data-folder="../assets/posters/enero/">Ene 2026</a>
+        </nav>
+      </aside>
+
+      <section class="poster-wrap">
+        <figure class="poster-view" id="posterView">
+          <img id="posterImg" src="" alt="Cartel del mes" />
+        </figure>
+
+        <div class="nav-arrows">
+          <a id="prevPoster" aria-label="Anterior">&#9664;</a>
+          <a id="nextPoster" aria-label="Siguiente">&#9654;</a>
+        </div>
+
+        <article class="cycle-copy" id="cycleCopy">
+          <div class="kicker">Notas del ciclo</div>
+          <h3 id="copyTitle">Ciclo activo</h3>
+          <p id="copyBody">Selecciona un mes para ver sus carteles.</p>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <footer>© La Azotea Cineclub</footer>
+
+  <script src="../assets/site.js"></script>
+<script>
+(async function () {
+  const qs  = s => document.querySelector(s);
+  const qsa = s => Array.from(document.querySelectorAll(s));
+
+  const img       = qs('#posterImg');
+  const copyTitle = qs('#copyTitle');
+  const copyBody  = qs('#copyBody');
+  const links     = qsa('#monthList a');
+  const prev      = qs('#prevPoster');
+  const next      = qs('#nextPoster');
+
+  let cycleTexts = {};
+  let currentMonth = null;
+  let images = [];
+  let index  = 0;
+
+  // --- función para limpiar IDs (quita BOM, espacios, etc.) ---
+  const normalizeId = (str) => {
+    if (!str) return "";
+    return String(str)
+      .replace(/^\uFEFF/, "")     // quita BOM invisible
+      .trim()                     // quita espacios
+      .replace(/\s+/g, "")        // quita espacios intermedios
+      .replace(/[^\d-]/g, "")     // deja solo números y guiones
+      .slice(0, 7);               // fuerza formato YYYY-MM
+  };
+
+  const JSON_URL = location.pathname.includes('/secs/')
+    ? '../assets/meses.json'
+    : 'assets/meses.json';
+
+  // --- carga JSON ---
+  async function loadCycleTextsFromJSON(){
+    try{
+      const res = await fetch(JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      const map = {};
+      data.meses.forEach(m => {
+        const id = normalizeId(m.id);
+        map[id] = { title: m.title || "", body: m.body || "" };
+      });
+      console.log("✅ Claves cargadas:", Object.keys(map));
+      return map;
+    }catch(e){
+      console.error("❌ Error cargando JSON:", e);
+      return {};
+    }
+  }
+
+  // --- prueba si imagen existe ---
+  async function probe(src){
+    return new Promise(res => {
+      const i = new Image();
+      i.onload  = () => res({ ok:true, src });
+      i.onerror = () => res({ ok:false, src });
+      i.src = src + "?t=" + Date.now();
+    });
+  }
+
+  // --- carga un mes ---
+  async function loadMonth(folder, rawMonth, max = 8){
+    const key = normalizeId(rawMonth);
+    console.log("🔍 Buscando mes:", key);
+    images = []; index = 0;
+
+    // Carga imágenes numeradas
+    const candidates = [];
+    for(let i=1;i<=max;i++){
+      const num = String(i).padStart(2,"0");
+      candidates.push(`${folder}${key}-${num}.jpg`);
+    }
+    const results = await Promise.all(candidates.map(probe));
+    images = results.filter(r => r.ok).map(r => r.src);
+    if(images.length) img.src = images[0];
+
+    // Carga texto desde JSON
+    const entry = cycleTexts[key];
+    console.log("🧾 Entrada encontrada:", entry);
+    if(entry){
+      copyTitle.textContent = entry.title || `Ciclo ${key}`;
+      copyBody.textContent  = entry.body || "";
+    } else {
+      copyTitle.textContent = `Ciclo ${key}`;
+      copyBody.textContent  = `Carteles numerados del mes ${key}. Usa las flechas para navegar. (⚠ sin texto en meses.json)`;
+    }
+  }
+
+  // --- navegación de flechas ---
+  prev.addEventListener('click', () => {
+    if (!images.length) return;
+    index = (index - 1 + images.length) % images.length;
+    img.src = images[index];
+  });
+  next.addEventListener('click', () => {
+    if (!images.length) return;
+    index = (index + 1) % images.length;
+    img.src = images[index];
+  });
+
+  // --- click en meses ---
+  links.forEach(a => {
+    a.addEventListener('click', async e => {
+      e.preventDefault();
+      links.forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      currentMonth = a.getAttribute('href').replace('#','');
+      await loadMonth(a.dataset.folder, currentMonth);
+    });
+  });
+
+  // --- inicializa ---
+  cycleTexts = await loadCycleTextsFromJSON();
+  const hash = location.hash.replace('#','');
+  const def  = links.find(a => a.getAttribute('href') === '#'+hash) || links[0];
+  if (!def) return;
+  def.classList.add('active');
+  currentMonth = def.getAttribute('href').replace('#','');
+  await loadMonth(def.dataset.folder, currentMonth);
+})();
+</script>
+
+
+
+</body>
+</html>

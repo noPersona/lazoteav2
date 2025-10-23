@@ -5,152 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>La Azotea — Cineclub</title>
   <meta name="description" content="La Azotea Cineclub — ciclos, calendario y archivo" />
-
-  <style>
-    :root{
-      --bg:#0a0a0a; --fg:#f5f5f5; --ink-80:#000000cc; --muted:#cfcfcf; --gap:clamp(12px,2vw,20px);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    a{color:inherit;text-decoration:none}
-
-    /* ===== Background video ===== */
-    .bg-wrap{position:fixed;inset:0;z-index:-2;overflow:hidden;background:#000}
-    .bg-video{
-      position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-      filter:contrast(140%) brightness(130%) saturate(0);
-      opacity:.9;mix-blend-mode:screen;
-    }
-    /* Fallback imagen si video no carga */
-    .bg-fallback{
-      position:absolute;inset:0;background:#000 url("assets/static-poster.jpg") center/cover no-repeat;
-    }
-
-    .grain{position:fixed;inset:0;pointer-events:none;z-index:-1;
-      background-image:
-        repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0 1px,transparent 1px 2px),
-        repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 2px);
-      animation:jitter .9s steps(2,end) infinite}
-    @keyframes jitter{50%{transform:translate(0,1px)}}
-    .scan{position:fixed;inset:0;pointer-events:none;mix-blend-mode:overlay;
-      background:linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
-      background-size:100% 3px;opacity:.25;animation:scan 6s linear infinite}
-    @keyframes scan{0%{background-position:0 0}100%{background-position:0 100%}}
-
-    /* ===== Header/Menu ===== */
-    header{position:sticky;top:0;z-index:50;display:flex;justify-content:center;
-      padding:clamp(10px,1.5vh,16px) var(--gap);transition:backdrop-filter .3s ease, background-color .3s ease}
-    header .nav{
-      display:flex;gap:clamp(14px,3vw,34px);background:var(--ink-80);color:var(--fg);
-      padding:10px 16px;border-radius:999px;border:1px solid #1a1a1a;backdrop-filter:blur(6px);
-      box-shadow:0 4px 18px rgba(0,0,0,.35)
-    }
-    header.scrolled{background:rgba(0,0,0,.4);backdrop-filter:blur(8px)}
-    .nav a{position:relative;font-weight:600;letter-spacing:.02em;padding:8px 2px}
-    .nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .2s ease}
-    .nav a:hover::after{transform:scaleX(1)}
-    .nav a:hover{text-shadow:0 0 1px #fff}
-    @keyframes gl1{50%{transform:translateX(.5px)}}
-    .nav a:hover{animation:gl1 .35s steps(2,end) 1}
-
-    /* ===== Center Logo + CTA (fixed) ===== */
-    .hero{position:fixed;inset:0;pointer-events:none;display:grid;place-items:center;z-index:10;padding:var(--gap)}
-    .logo-cta{
-      display:flex;align-items:center;gap:clamp(16px,3vw,32px);background:rgba(0,0,0,.55);
-      border:1px solid #1a1a1a;border-radius:16px;padding:clamp(10px,2vw,16px) clamp(14px,3vw,22px);
-      box-shadow:0 12px 28px rgba(0,0,0,.45);pointer-events:auto;backdrop-filter:blur(8px)
-    }
-    .logo{
-      display:flex;align-items:center;justify-content:center;width:clamp(160px,28vw,360px);
-      aspect-ratio:1.8/1;position:relative;border:1px solid #222;border-radius:12px;overflow:hidden;
-      background:transparent; /* quitamos placeholder */
-    }
-    /* ✅ Quitar filtros que podrían esconder tu PNG/JPG */
-    .logo img{width:100%;height:100%;object-fit:contain;display:block;/* filter:invert(1) contrast(95%); */}
-    .logo::before,.logo::after{content:"";position:absolute;inset:0;mix-blend-mode:screen;pointer-events:none}
-    .logo::before{background:linear-gradient(90deg,transparent 0 20%,rgba(255,255,255,.18) 20% 21%,transparent 21% 60%,rgba(255,255,255,.12) 60% 61%,transparent 61% 100%);opacity:.6;animation:shred 2.5s steps(3,end) infinite}
-    .logo::after{background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 2px,transparent 2px 4px);opacity:.35}
-    @keyframes shred{50%{transform:translateX(1px)}}
-    .cta{
-      display:inline-flex;align-items:center;justify-content:center;gap:.6em;border-radius:999px;
-      padding:.8em 1.2em;font-weight:700;letter-spacing:.02em;border:1px solid #222;background:#fff;color:#000;
-      text-transform:uppercase;font-size:clamp(12px,1.1vw,14px);box-shadow:0 6px 18px rgba(0,0,0,.35);
-      transition:transform .08s ease, box-shadow .2s ease, filter .2s ease
-    }
-    .cta:active{transform:translateY(1px)}
-    .cta:hover{filter:contrast(120%)}
-    .cta .caret{display:inline-block;translate:0 1px}
-
-    /* ===== Page Sections ===== */
-    main{position:relative;z-index:1;padding-top:28vh}
-    section{min-height:85vh;padding:calc(12vh + var(--gap)) var(--gap) 12vh;display:flex;align-items:flex-end;border-top:1px solid #1a1a1a}
-    section h2{margin:0 0 8px 0;font-size:clamp(22px,3.6vw,46px);line-height:1}
-    .lede{max-width:72ch;color:var(--muted);font-size:clamp(14px,1.3vw,18px);line-height:1.6}
-
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-
-    @media (max-width:768px){
-      .logo-cta{flex-direction:column;align-items:stretch;text-align:center}
-      .logo{width:min(72vw,320px)}
-      header .nav{gap:16px;padding:10px 12px}
-      .bg-video{opacity:.65}
-    }
-    @media (prefers-reduced-motion:reduce){
-      .bg-video,.grain,.scan,.logo::before{animation:none}
-    }
-  </style>
+  <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-  <!-- Background video -->
+  <!-- Fondo -->
   <div class="bg-wrap" aria-hidden="true">
     <div class="bg-fallback" aria-hidden="true"></div>
-    <!-- Cambia las rutas a tus archivos -->
     <video
       class="bg-video"
       autoplay
       muted
       loop
       playsinline
-      webkit-playsinline
       preload="metadata"
-      poster="assets/static-poster.jpg"
-    >
-      <!-- Prioriza WebM si lo tienes -->
+      poster="assets/static-poster.jpg">
       <source src="assets/staticShort.webm" type="video/webm">
-      <!-- MP4 H.264 (yuv420p) como respaldo -->
-      <source src="assets/staticShort01.mp4" type="video/mp4">
-      <!-- Fallback para navegadores sin video -->
-      Tu navegador no soporta video HTML5.
+      <source src="assets/staticShort.mp4" type="video/mp4">
     </video>
   </div>
-
+  <div class="bg-overlay" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
   <div class="scan" aria-hidden="true"></div>
-
-  <!-- Header / Menu -->
+  
+  <!-- Menú global -->
   <header id="siteHeader" role="banner" aria-label="Navegación principal">
     <nav class="nav" role="navigation" aria-label="Principal">
-      <!-- ✅ Ahora estas rutas van a OTRAS PÁGINAS -->
       <a href="/index.html">Inicio</a>
-      <a href="/calendario.html">Calendario</a>
-      <a href="/ciclos.html">Ciclos</a>
-      <a href="/archivo.html">Archivo</a>
-      <a href="/nosotros.html">Nosotros</a>
-      <a href="/contacto.html">Contacto</a>
+      <a href="/secs/calendario.html">Calendario</a>
+      <a href="/secs/ciclos.html">Ciclos</a>
+      <a href="/secs/archivo.html">Archivo</a>
+      <a href="/secs/us.html">Nosotros</a>
+      <a href="/secs/secretotunel.html">Contacto</a>
     </nav>
   </header>
 
-  <!-- Hero: Logo + CTA (fijos) -->
+  <!-- Hero opcional -->
   <div class="hero" aria-hidden="false">
     <div class="logo-cta" aria-label="Identidad y acceso rápido">
       <div class="logo" aria-label="Logo de La Azotea">
-        <!-- Acepta PNG o JPG -->
         <img src="assets/avatarLogo.png" alt="La Azotea Cineclub" loading="eager" />
         <span class="sr-only">La Azotea Cineclub</span>
       </div>
-      <a class="cta" href="/calendario.html" aria-label="Ir al calendario">
-        Conéctate aquí <span class="caret">▸</span>
-      </a>
+      <a class="cta" href="/secs/calendario.html" aria-label="Ir al calendario">Conéctate aquí ▸</a>
     </div>
   </div>
 
@@ -163,56 +59,9 @@
       </div>
     </section>
 
-    <section aria-labelledby="titulo-calendario">
-      <div>
-        <h2 id="titulo-calendario">Calendario</h2>
-        <p class="lede">Fechas, funciones especiales y actividades. Pronto: embed del calendario.</p>
-      </div>
-    </section>
-
-    <section aria-labelledby="titulo-ciclos">
-      <div>
-        <h2 id="titulo-ciclos">Ciclos</h2>
-        <p class="lede">Curadurías temáticas (glitch, decadencia, cuerpos y máquinas…).</p>
-      </div>
-    </section>
-
-    <section aria-labelledby="titulo-archivo">
-      <div>
-        <h2 id="titulo-archivo">Archivo</h2>
-        <p class="lede">Programas pasados, pósters, ensayos y registros.</p>
-      </div>
-    </section>
-
-    <section aria-labelledby="titulo-nosotros">
-      <div>
-        <h2 id="titulo-nosotros">Nosotros</h2>
-        <p class="lede">Colectivo cineclubero en Mazatlán. Minimal, industrial, con una pizca de ruido blanco.</p>
-      </div>
-    </section>
-
-    <section aria-labelledby="titulo-contacto">
-      <div>
-        <h2 id="titulo-contacto">Contacto</h2>
-        <p class="lede">DM en IG, correo o formulario.</p>
-      </div>
-    </section>
+    <!-- … Tus demás secciones … -->
   </main>
 
-  <script>
-    // Header efecto scrolled
-    const header = document.getElementById('siteHeader');
-    const onScroll = () => {
-      if (window.scrollY > 12) header.classList.add('scrolled');
-      else header.classList.remove('scrolled');
-    };
-    document.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    // Si el video falla, ocultamos el <video> y dejamos el fallback
-    const vid = document.querySelector('.bg-video');
-    vid?.addEventListener('error', () => { vid.style.display = 'none'; });
-    vid?.addEventListener('loadeddata', () => { document.querySelector('.bg-fallback').style.display='none'; });
-  </script>
+  <script src="assets/site.js"></script>
 </body>
 </html>
