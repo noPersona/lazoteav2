@@ -1,4 +1,41 @@
 
+/* ===== Fuente personalizada: Pirata One ===== */
+@font-face {
+  font-family: 'PirataOne';
+  src: url('../assets/fonts/PirataOne.ttf') format('truetype');
+  font-display: swap;
+}
+/* ===== Tipografía global ===== */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+@font-face {
+  font-family: 'PirataOne';
+  src: url('../assets/fonts/PirataOne.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* Títulos góticos */
+h1, h2, h3, .page-title, .video-title {
+  font-family: 'PirataOne', serif;
+}
+
+/* Texto general */
+body, p, li, .lede, .video-desc {
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.03em;
+}
+body {
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+h1, h2, h3 {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* ===== Color de Texto ===== */
 body { color: white; }
 
@@ -457,3 +494,169 @@ body.light-page footer{ text-align:center; }
 
 /* Evita que nuestros <section> “hereden” el section global de 85vh */
 body.light-page .about-wrap{ padding:0; }
+
+
+/* ===== Mensaje flotante tipo "alert" ===== */
+#alertMessage {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  background: #000;
+  color: #0ff;
+  font-family: "Courier New", monospace;
+  font-size: 0.95rem;
+  letter-spacing: .05em;
+  border: 1px solid #0ff;
+  border-radius: 12px;
+  padding: 1rem 1.4rem;
+  box-shadow: 0 0 12px rgba(0,255,255,.5);
+  opacity: 0;
+  z-index: 9999;
+  transition: all .5s ease;
+}
+#alertMessage.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+
+/* ======== Sección: Online ======== */
+.videos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  padding: 2rem 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.video-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 2rem;
+}
+
+.video-wrapper {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
+.video-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.video-desc {
+  font-size: 0.95rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+@media (max-width: 600px) {
+  .video-wrapper {
+    max-width: 100%;
+  }
+}
+
+
+/* ======== Sección: Online ======== */
+.videos-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centra todos los elementos */
+  gap: 5rem;
+  padding: 3rem 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.video-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 850px; /* más grande */
+  margin: 0 auto;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 720px; /* antes 480px */
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  background: #000;
+}
+
+.video-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.video-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.video-desc {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-top: 0.8rem;
+  line-height: 1.6;
+  max-width: 650px;
+  color: #ddd;
+}
+
+/* efecto sutil al pasar el mouse */
+.video-wrapper:hover {
+  transform: scale(1.02);
+  transition: transform 0.3s ease;
+  box-shadow: 0 0 25px rgba(255,255,255,0.2);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .video-wrapper {
+    max-width: 100%;
+  }
+  .video-title {
+    font-size: 1.25rem;
+  }
+  .video-desc {
+    font-size: 0.95rem;
+  }
+}
+.video-item {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.7s ease;
+}
+.video-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

@@ -25,11 +25,12 @@
   <header id="siteHeader" role="banner">
     <nav class="nav">
       <a href="../index.html">Inicio</a>
-      <a href="calendario.html">Calendario</a>
-      <a href="ciclos.html">Ciclos</a>
-      <a href="archivo.html">Archivo</a>
-      <a href="us.html">Nosotros</a>
-      <a href="secretotunel.html">Contacto</a>
+      <a href="/secs/calendario.html">Calendario</a>
+      <a href="/secs/ciclos.html">Ciclos</a>
+      <a href="/secs/online.html">Online</a>
+      <a href="/secs/archivo.html">Archivo</a>
+      <a href="/secs/us.html">Nosotros</a>
+      <a href="/secs/secretotunel.html">Contacto</a>
     </nav>
   </header>
 
@@ -60,7 +61,7 @@
         <article class="cycle-copy" id="cycleCopy">
           <div class="kicker">Notas del ciclo</div>
           <h3 id="copyTitle">Ciclo activo</h3>
-          <p id="copyBody">Selecciona un mes para ver sus carteles.</p>
+          <div id="copyBody" class="copy-body">Selecciona un mes para ver sus carteles.</div>
         </article>
       </section>
     </div>
@@ -86,30 +87,49 @@
   let images = [];
   let index  = 0;
 
-  // --- función para limpiar IDs (quita BOM, espacios, etc.) ---
+  // Limpia IDs a formato YYYY-MM
   const normalizeId = (str) => {
     if (!str) return "";
     return String(str)
-      .replace(/^\uFEFF/, "")     // quita BOM invisible
-      .trim()                     // quita espacios
-      .replace(/\s+/g, "")        // quita espacios intermedios
-      .replace(/[^\d-]/g, "")     // deja solo números y guiones
-      .slice(0, 7);               // fuerza formato YYYY-MM
+      .replace(/^\uFEFF/, "")
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(/[^\d-]/g, "")
+      .slice(0, 7);
   };
+
+  // Render seguro: respeta \n como <br> y soporta body_paragraphs
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+  function renderBody(entry){
+    if (!copyBody) return;
+    if (entry.body_paragraphs && entry.body_paragraphs.length){
+      copyBody.innerHTML = entry.body_paragraphs
+        .map(p => `<p>${esc(p).replace(/\n/g,'<br>')}</p>`)
+        .join('');
+    } else {
+      copyBody.innerHTML = esc(entry.body || '').replace(/\n/g,'<br>');
+    }
+  }
 
   const JSON_URL = location.pathname.includes('/secs/')
     ? '../assets/meses.json'
     : 'assets/meses.json';
 
-  // --- carga JSON ---
+  // Carga JSON → mapa { "YYYY-MM": { title, body, body_paragraphs } }
   async function loadCycleTextsFromJSON(){
     try{
       const res = await fetch(JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
       const data = await res.json();
       const map = {};
-      data.meses.forEach(m => {
-        const id = normalizeId(m.id);
-        map[id] = { title: m.title || "", body: m.body || "" };
+      (data.meses || []).forEach(m => {
+        const id = normalizeId(m?.id);
+        if (!id) return;
+        map[id] = {
+          title: m.title || "",
+          body: m.body || "",
+          body_paragraphs: Array.isArray(m.body_paragraphs) ? m.body_paragraphs : null
+        };
       });
       console.log("✅ Claves cargadas:", Object.keys(map));
       return map;
@@ -119,8 +139,8 @@
     }
   }
 
-  // --- prueba si imagen existe ---
-  async function probe(src){
+  // Verifica imagen existente
+  function probe(src){
     return new Promise(res => {
       const i = new Image();
       i.onload  = () => res({ ok:true, src });
@@ -129,13 +149,11 @@
     });
   }
 
-  // --- carga un mes ---
+  // Carga un mes (YYYY-MM-01..08.jpg)
   async function loadMonth(folder, rawMonth, max = 8){
     const key = normalizeId(rawMonth);
-    console.log("🔍 Buscando mes:", key);
     images = []; index = 0;
 
-    // Carga imágenes numeradas
     const candidates = [];
     for(let i=1;i<=max;i++){
       const num = String(i).padStart(2,"0");
@@ -143,21 +161,22 @@
     }
     const results = await Promise.all(candidates.map(probe));
     images = results.filter(r => r.ok).map(r => r.src);
-    if(images.length) img.src = images[0];
+    if (images.length) img.src = images[0];
+    else img.removeAttribute('src');
 
-    // Carga texto desde JSON
+    // Texto desde JSON (incluye body_paragraphs)
     const entry = cycleTexts[key];
-    console.log("🧾 Entrada encontrada:", entry);
-    if(entry){
+    if (entry){
       copyTitle.textContent = entry.title || `Ciclo ${key}`;
-      copyBody.textContent  = entry.body || "";
+      renderBody(entry);
     } else {
       copyTitle.textContent = `Ciclo ${key}`;
-      copyBody.textContent  = `Carteles numerados del mes ${key}. Usa las flechas para navegar. (⚠ sin texto en meses.json)`;
+      copyBody.innerHTML    = `Carteles numerados del mes ${esc(key)}. Usa las flechas para navegar. <em>(sin texto en meses.json)</em>`;
+      console.warn('No hay entrada para', key, '→', Object.keys(cycleTexts));
     }
   }
 
-  // --- navegación de flechas ---
+  // Navegación
   prev.addEventListener('click', () => {
     if (!images.length) return;
     index = (index - 1 + images.length) % images.length;
@@ -169,7 +188,7 @@
     img.src = images[index];
   });
 
-  // --- click en meses ---
+  // Click en meses
   links.forEach(a => {
     a.addEventListener('click', async e => {
       e.preventDefault();
@@ -180,7 +199,7 @@
     });
   });
 
-  // --- inicializa ---
+  // Init
   cycleTexts = await loadCycleTextsFromJSON();
   const hash = location.hash.replace('#','');
   const def  = links.find(a => a.getAttribute('href') === '#'+hash) || links[0];
@@ -190,6 +209,7 @@
   await loadMonth(def.dataset.folder, currentMonth);
 })();
 </script>
+
 
 
 
